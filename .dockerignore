@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+vendor
+.env
+.env.*
+!database/database.sqlite
+tests
+phpunit.xml
+README.md

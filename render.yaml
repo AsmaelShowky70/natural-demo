@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: natural-snacks-traceability
+    runtime: docker
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: APP_NAME
+        value: "Natural Snacks Traceability"
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        value: "base64:h5F2fyiTcPT0I1XLy/oEjmACbLjp+/bHK/8awq5B5qQ="
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/database/database.sqlite
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: CACHE_STORE
+        value: file
