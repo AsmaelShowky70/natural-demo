@@ -1,19 +1,15 @@
 #!/bin/bash
 set -e
 
-# Handle dynamic port assigned by Render
-PORT="${PORT:-80}"
-sed -i "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
-sed -i "s/:80>/:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+PORT="${PORT:-7860}"
 
-# Ensure SQLite file exists and has proper permissions
-mkdir -p /var/www/html/database
-if [ ! -f /var/www/html/database/database.sqlite ]; then
-    touch /var/www/html/database/database.sqlite
+# Ensure required directories exist
+mkdir -p database storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
+
+# Ensure SQLite file exists
+if [ ! -f database/database.sqlite ]; then
+    touch database/database.sqlite
 fi
-
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
 # Run migrations
 php artisan migrate --force
@@ -25,18 +21,16 @@ if [ "$USERS_COUNT" = "0" ]; then
     php artisan db:seed --force
 fi
 
-# Ensure proper permissions for Apache and SQLite
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
-if [ -f /var/www/html/database/database.sqlite ]; then
-    chmod 664 /var/www/html/database/database.sqlite
-fi
+# Clear previous cache to ensure fresh configuration
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
 
-# Optimize Laravel
+# Optimize Laravel for production
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Start Apache in the foreground
-exec apache2-foreground
-
+# Start Laravel server on 0.0.0.0:$PORT
+echo "Starting Natural Snacks Traceability on 0.0.0.0:${PORT}..."
+exec php artisan serve --host=0.0.0.0 --port="${PORT}"

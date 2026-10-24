@@ -19,7 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (request()->header('x-forwarded-proto') === 'https' || str_contains(request()->header('host', ''), 'onrender.com') || str_contains(request()->header('host', ''), 'lhr.life') || str_contains(request()->header('host', ''), 'loca.lt')) {
+        if (request()->header('x-forwarded-proto') === 'https' 
+            || str_contains(request()->header('host', ''), 'hf.space')
+            || str_contains(request()->header('host', ''), 'onrender.com') 
+            || str_contains(request()->header('host', ''), 'trycloudflare.com')
+            || str_contains(request()->header('host', ''), 'lhr.life') 
+            || str_contains(request()->header('host', ''), 'loca.lt')
+            || app()->environment('production')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     }

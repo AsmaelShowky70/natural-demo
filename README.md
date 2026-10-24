@@ -1,3 +1,12 @@
+---
+title: Natural Snacks Traceability
+emoji: 🌿
+colorFrom: green
+colorTo: emerald
+sdk: docker
+app_port: 7860
+---
+
 # نظام التتبع وسلسلة الإمداد للوجبات الخفيفة الطبيعية
 ## Natural Snacks Traceability & Supply Chain Enterprise System (Laravel 11 & PHP 8.2+)
 

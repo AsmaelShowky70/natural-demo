@@ -1,6 +1,6 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# Install required Linux packages and PHP extensions
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     libzip-dev \
@@ -15,38 +15,38 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_sqlite pdo_mysql bcmath zip gd opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Configure Apache DocumentRoot to Laravel's public directory
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Allow .htaccess overrides in Apache
-RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
-
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/html
+# Create non-root user (UID 1000) for Hugging Face Spaces compatibility
+RUN useradd -m -u 1000 user
+WORKDIR /home/user/app
 
-# Copy all application files
-COPY . .
+# Default production environment variables
+ENV APP_NAME="Natural Snacks Traceability" \
+    APP_ENV=production \
+    APP_KEY="base64:h5F2fyiTcPT0I1XLy/oEjmACbLjp+/bHK/8awq5B5qQ=" \
+    APP_DEBUG=false \
+    DB_CONNECTION=sqlite \
+    SESSION_DRIVER=file \
+    QUEUE_CONNECTION=sync \
+    CACHE_STORE=file \
+    PORT=7860
 
-# Install PHP dependencies without dev packages
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Copy all application files with proper ownership
+COPY --chown=user:user . .
 
-# Copy and prepare entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Copy and fix permissions on entrypoint
+COPY --chown=user:user docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
     && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Set directory permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+# Switch to non-root user
+USER user
 
-EXPOSE 80
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+EXPOSE 7860
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
